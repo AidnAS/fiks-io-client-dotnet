@@ -1,3 +1,8 @@
+>**!! Aidn fork of KS.Fiks.IO.Client !!**
+>>
+>This is a fork of the Fiks IO library that gets pushed to our Githubs Packages feed. The fork has the current modifications:
+>- Made it possible to use a custom IMaskinporten implementation (see https://github.com/ks-no/fiks-io-client-dotnet/pull/233)
+
 # fiks-io-client-dotnet
 [![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ks-no/fiks-io-client-dotnet/blob/master/LICENSE)
 [![Nuget](https://img.shields.io/nuget/vpre/KS.fiks.io.client.svg)](https://www.nuget.org/packages/KS.Fiks.IO.Client)
