@@ -18,6 +18,8 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x  
+      - name: GitHub Packages auth
+        run: dotnet nuget update source github_aidnas --username aidnas --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text
       - name: Install dependencies
         run: dotnet restore
       - name: build
