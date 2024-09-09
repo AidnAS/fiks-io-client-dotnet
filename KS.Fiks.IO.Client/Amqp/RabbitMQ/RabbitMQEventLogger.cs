@@ -9,7 +9,6 @@ namespace KS.Fiks.IO.Client.Amqp.RabbitMQ
 {
     public class RabbitMQEventLogger : EventListener
     {
-        private const string RabbitMQEventSourceName = "rabbitmq-dotnet-client";
         private static ILogger<RabbitMQEventLogger> _logger;
         private readonly EventLevel _eventLevel;
 
@@ -23,7 +22,7 @@ namespace KS.Fiks.IO.Client.Amqp.RabbitMQ
         {
             Console.WriteLine("ES: " + eventSource.Name);
 
-            if(eventSource.Name.StartsWith("rabbit"))
+            if(eventSource.Name.StartsWith("rabbitmq", StringComparison.CurrentCultureIgnoreCase))
             {
                 EnableEvents(eventSource, _eventLevel);
             }
@@ -31,7 +30,7 @@ namespace KS.Fiks.IO.Client.Amqp.RabbitMQ
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (!eventData.EventSource.Name.StartsWith("rabbit"))
+            if (!eventData.EventSource.Name.StartsWith("rabbitmq", StringComparison.CurrentCultureIgnoreCase))
             {
                 return;
             }
