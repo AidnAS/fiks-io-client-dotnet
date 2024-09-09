@@ -1,0 +1,30 @@
+name: Package and publish
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  pack:
+    name: "Package and publish"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x  
+      - name: Install dependencies
+        run: dotnet restore
+      - name: build
+        run: dotnet build --configuration Release --no-restore
+      - name: test
+        run: dotnet test --no-restore --verbosity normal --filter TestCategory!~Integration
+      - name: pack
+        run: dotnet pack KS.Fiks.IO.Client/KS.Fiks.IO.Client.csproj --configuration Release
+      - name: push
+        run: dotnet nuget push "KS.Fiks.IO.Client/bin/Release/*.nupkg" --source "github_aidnas"
