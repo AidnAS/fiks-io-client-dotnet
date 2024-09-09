@@ -21,7 +21,9 @@ namespace KS.Fiks.IO.Client.Amqp.RabbitMQ
 
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
-            if(eventSource.Name.Equals(RabbitMQEventSourceName))
+            Console.WriteLine("ES: " + eventSource.Name);
+
+            if(eventSource.Name.StartsWith("rabbit"))
             {
                 EnableEvents(eventSource, _eventLevel);
             }
@@ -29,7 +31,7 @@ namespace KS.Fiks.IO.Client.Amqp.RabbitMQ
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (eventData.EventSource.Name != RabbitMQEventSourceName)
+            if (!eventData.EventSource.Name.StartsWith("rabbit"))
             {
                 return;
             }
