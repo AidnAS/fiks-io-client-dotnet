@@ -2,20 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using KS.Fiks.IO.Client.Amqp;
-using KS.Fiks.IO.Client.Asic;
-using KS.Fiks.IO.Client.Catalog;
 using KS.Fiks.IO.Client.Configuration;
 using KS.Fiks.IO.Client.Dokumentlager;
 using KS.Fiks.IO.Client.Models;
 using KS.Fiks.IO.Client.Send;
+using KS.Fiks.IO.Crypto.Asic;
+using KS.Fiks.IO.Crypto.Configuration;
+using KS.Fiks.IO.Crypto.Models;
 using KS.Fiks.IO.Send.Client;
+using KS.Fiks.IO.Send.Client.Catalog;
 using KS.Fiks.IO.Send.Client.Configuration;
+using KS.Fiks.IO.Send.Client.Models;
 using Ks.Fiks.Maskinporten.Client;
-using Microsoft.Extensions.Logging;
 using Moq;
 using RabbitMQ.Client.Events;
-using ApiConfiguration = KS.Fiks.IO.Client.Configuration.ApiConfiguration;
-using KatalogConfiguration = KS.Fiks.IO.Client.Configuration.KatalogConfiguration;
 
 namespace KS.Fiks.IO.Client.Tests
 {
