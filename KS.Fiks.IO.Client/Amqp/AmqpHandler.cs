@@ -25,7 +25,7 @@ namespace KS.Fiks.IO.Client.Amqp
         private readonly IConnectionFactory _connectionFactory;
         private readonly IAmqpWatcher _amqpWatcher;
         private IConnection _connection;
-        private IModel _channel;
+        private IChannel _channel;
         private IAmqpReceiveConsumer _receiveConsumer;
         private EventHandler<MottattMeldingArgs> _receivedEvent;
         private EventHandler<ConsumerEventArgs> _cancelledEvent;
@@ -96,9 +96,9 @@ namespace KS.Fiks.IO.Client.Amqp
             }
 
             _receiveConsumer.Received += receivedEvent;
-            _receiveConsumer.ConsumerCancelled += cancelledEvent;
+            //_receiveConsumer.ConsumerCancelled += cancelledEvent;
 
-            _channel.BasicConsume(_receiveConsumer, GetQueueName());
+            _channel.BasicConsumeAsync(GetQueueName(), false, _receiveConsumer);
         }
 
         public void Dispose()
@@ -128,37 +128,35 @@ namespace KS.Fiks.IO.Client.Amqp
 
             if (_cancelledEvent != null)
             {
-                _receiveConsumer.ConsumerCancelled -= _cancelledEvent;
+                //_receiveConsumer.ConsumerCancelledAync -= _cancelledEvent;
             }
 
             // Unsubscribe events for logging of RabbitMQ events
-            _connection.ConnectionShutdown -= _amqpWatcher.HandleConnectionShutdown;
-            _connection.ConnectionBlocked -= _amqpWatcher.HandleConnectionBlocked;
-            _connection.ConnectionUnblocked -= _amqpWatcher.HandleConnectionUnblocked;
+            _connection.ConnectionShutdownAsync -= _amqpWatcher.HandleConnectionShutdown;
+            _connection.ConnectionBlockedAsync -= _amqpWatcher.HandleConnectionBlocked;
+            _connection.ConnectionUnblockedAsync -= _amqpWatcher.HandleConnectionUnblocked;
 
             _channel.Dispose();
             _connection.Dispose();
         }
 
-        private Task Connect(AmqpConfiguration amqpConfiguration)
+        private async Task Connect(AmqpConfiguration amqpConfiguration)
         {
-            _connection = CreateConnection(amqpConfiguration);
-            _channel = ConnectToChannel(amqpConfiguration);
+            _connection = await CreateConnection(amqpConfiguration);
+            _channel = await ConnectToChannel(amqpConfiguration);
 
             // Handle events for logging of RabbitMQ events
-            _connection.ConnectionShutdown += _amqpWatcher.HandleConnectionShutdown;
-            _connection.ConnectionBlocked += _amqpWatcher.HandleConnectionBlocked;
-            _connection.ConnectionUnblocked += _amqpWatcher.HandleConnectionUnblocked;
-
-            return Task.CompletedTask;
+            _connection.ConnectionShutdownAsync += _amqpWatcher.HandleConnectionShutdown;
+            _connection.ConnectionBlockedAsync += _amqpWatcher.HandleConnectionBlocked;
+            _connection.ConnectionUnblockedAsync += _amqpWatcher.HandleConnectionUnblocked;
         }
 
-        private IModel ConnectToChannel(AmqpConfiguration configuration)
+        private async Task<IChannel> ConnectToChannel(AmqpConfiguration configuration)
         {
             try
             {
-                var channel = _connection.CreateModel();
-                channel.BasicQos(0, configuration.PrefetchCount, false);
+                var channel = await _connection.CreateChannelAsync();
+                await channel.BasicQosAsync(0, configuration.PrefetchCount, false);
                 return channel;
             }
             catch (Exception ex)
@@ -167,12 +165,12 @@ namespace KS.Fiks.IO.Client.Amqp
             }
         }
 
-        private IConnection CreateConnection(AmqpConfiguration configuration)
+        private async Task<IConnection> CreateConnection(AmqpConfiguration configuration)
         {
             try
             {
                 var endpoint = new AmqpTcpEndpoint(configuration.Host, configuration.Port, _sslOption);
-                var connection = _connectionFactory.CreateConnection(new List<AmqpTcpEndpoint> { endpoint }, configuration.ApplicationName);
+                var connection = await _connectionFactory.CreateConnectionAsync(new List<AmqpTcpEndpoint> { endpoint }, configuration.ApplicationName);
                 return connection;
             }
             catch (Exception ex)

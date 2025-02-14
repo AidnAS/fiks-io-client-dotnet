@@ -1,4 +1,7 @@
-﻿namespace KS.Fiks.IO.Client.Amqp
+﻿using System.Threading.Tasks;
+using RabbitMQ.Client.Events;
+
+namespace KS.Fiks.IO.Client.Amqp
 {
     using System;
     using Microsoft.Extensions.Logging;
@@ -15,19 +18,22 @@
             }
         }
 
-        public void HandleConnectionBlocked(object sender, EventArgs e)
+        public Task HandleConnectionBlocked(object sender, ConnectionBlockedEventArgs e)
         {
             _logger?.LogDebug("RabbitMQ Connection ConnectionBlocked event has been triggered");
+            return Task.CompletedTask;
         }
 
-        public void HandleConnectionUnblocked(object sender, EventArgs e)
-        {
-            _logger?.LogDebug("RabbitMQ Connection ConnectionUnblocked event has been triggered");
-        }
-
-        public void HandleConnectionShutdown(object sender, EventArgs shutdownEventArgs)
+        public Task HandleConnectionShutdown(object sender, ShutdownEventArgs shutdownEventArgs)
         {
             _logger?.LogDebug($"RabbitMQ Connection ConnectionShutdown event has been triggered");
+            return Task.CompletedTask;
+        }
+
+        public Task HandleConnectionUnblocked(object sender, AsyncEventArgs e)
+        {
+            _logger?.LogDebug("RabbitMQ Connection ConnectionUnblocked event has been triggered");
+            return Task.CompletedTask;
         }
     }
 }

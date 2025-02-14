@@ -1,11 +1,13 @@
-﻿using System;
+﻿using RabbitMQ.Client.Events;
+using System;
+using System.Threading.Tasks;
 
 namespace KS.Fiks.IO.Client.Amqp
 {
     public interface IAmqpWatcher
     {
-        void HandleConnectionBlocked(object sender, EventArgs e);
-        void HandleConnectionShutdown(object sender, EventArgs shutdownEventArgs);
-        void HandleConnectionUnblocked(object sender, EventArgs e);
+        Task HandleConnectionBlocked(object sender, ConnectionBlockedEventArgs e);
+        Task HandleConnectionShutdown(object sender, ShutdownEventArgs shutdownEventArgs);
+        Task HandleConnectionUnblocked(object sender, AsyncEventArgs e);
     }
 }

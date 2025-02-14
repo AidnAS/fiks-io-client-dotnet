@@ -22,16 +22,16 @@ namespace KS.Fiks.IO.Client.Send
         /**
          * Acknowledges that the message has been consumed
          */
-        void Ack();
+        Task Ack();
 
         /**
          * Acknowledges that the message could not be consumed
          */
-        void Nack();
+        Task Nack();
 
         /**
          *  Acknowledges that the message could not be consumed right and puts it back in the queue to be consumed again
          */
-        void NackWithRequeue();
+        Task NackWithRequeue();
     }
 }

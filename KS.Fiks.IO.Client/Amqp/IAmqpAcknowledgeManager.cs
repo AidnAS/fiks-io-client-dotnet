@@ -1,57 +1,58 @@
 using System;
+using System.Threading.Tasks;
 
 namespace KS.Fiks.IO.Client.Amqp
 {
     public interface IAmqpAcknowledgeManager
     {
-        Action Ack();
+        Task Ack();
 
-        Action Nack();
+        Task Nack();
 
-        Action NackWithRequeue();
+        Task NackWithRequeue();
     }
 
     public class AmqpAcknowledgeManager : IAmqpAcknowledgeManager
     {
-        private readonly Action _ackAction;
-        private readonly Action _nackAction;
-        private readonly Action _nackWithRequeueAction;
+        private readonly Func<ValueTask> _ackAction;
+        private readonly Func<ValueTask> _nackAction;
+        private readonly Func<ValueTask> _nackWithRequeueAction;
 
-        public AmqpAcknowledgeManager(Action ackAction, Action nackAction, Action nackWithRequeueAction)
+        public AmqpAcknowledgeManager(Func<ValueTask> ackAction, Func<ValueTask> nackAction, Func<ValueTask> nackWithRequeueAction)
         {
-            this._ackAction = ackAction;
-            this._nackAction = nackAction;
-            this._nackWithRequeueAction = nackWithRequeueAction;
+            _ackAction = ackAction;
+            _nackAction = nackAction;
+            _nackWithRequeueAction = nackWithRequeueAction;
         }
 
-        public Action Ack()
+        public async Task Ack()
         {
-            if (this._ackAction == null)
+            if (_ackAction == null)
             {
                 throw new NotSupportedException("Ack is currently not supported");
             }
 
-            return this._ackAction;
+            await _ackAction();
         }
 
-        public Action Nack()
+        public async Task Nack()
         {
-            if (this._nackAction == null)
+            if (_nackAction == null)
             {
                 throw new NotSupportedException("Nack is currently not supported");
             }
 
-            return this._nackAction;
+            await _nackAction();
         }
 
-        public Action NackWithRequeue()
+        public async Task NackWithRequeue()
         {
-            if (this._nackWithRequeueAction == null)
+            if (_nackWithRequeueAction == null)
             {
                 throw new NotSupportedException("Nack is currently not supported");
             }
 
-            return this._nackWithRequeueAction;
+            await _nackWithRequeueAction();
         }
     }
 }

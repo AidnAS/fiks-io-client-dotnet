@@ -29,21 +29,19 @@ namespace KS.Fiks.IO.Client.Amqp
             }
         }
 
+        public async Task<Credentials> GetCredentialsAsync(CancellationToken cancellationToken = new CancellationToken())
+        {
+            var token = await CheckState();
+            var password = $"{_integrasjonConfiguration.IntegrasjonPassord} {token.Token}";
+
+            return new Credentials(Name, UserName, password, null);
+        }
+
         public string Name { get; }
 
         public string UserName => _integrasjonConfiguration.IntegrasjonId.ToString();
 
-        public string Password => $"{_integrasjonConfiguration.IntegrasjonPassord} {CheckState().Token}";
-
-        public TimeSpan? ValidUntil { get; }
-
-        public void Refresh()
-        {
-            _logger.LogDebug("Refresh start");
-            RetrieveToken();
-        }
-
-        private MaskinportenToken CheckState()
+        private async Task<MaskinportenToken> CheckState()
         {
             _lock.AcquireReaderLock(TokenRetrievalTimeout);
             try
@@ -58,15 +56,16 @@ namespace KS.Fiks.IO.Client.Amqp
                 _lock.ReleaseReaderLock();
             }
 
-            return RetrieveToken();
+            return await RetrieveToken();
         }
 
-        private MaskinportenToken RetrieveToken()
+        private async Task<MaskinportenToken> RetrieveToken()
         {
             _lock.AcquireWriterLock(TokenRetrievalTimeout);
+            
             try
             {
-                return RequestOrRenewToken();
+                return await RequestOrRenewToken();
             }
             finally
             {
@@ -74,11 +73,9 @@ namespace KS.Fiks.IO.Client.Amqp
             }
         }
 
-        private MaskinportenToken RequestOrRenewToken()
+        async Task<MaskinportenToken> RequestOrRenewToken()
         {
-            var getAccessTokenTask = Task.Run(() => _maskinportenClient.GetAccessToken(_integrasjonConfiguration.Scope));
-            getAccessTokenTask.Wait();
-            _maskinportenToken = getAccessTokenTask.Result;
+            _maskinportenToken = await _maskinportenClient.GetAccessToken(_integrasjonConfiguration.Scope);
             return _maskinportenToken;
         }
     }

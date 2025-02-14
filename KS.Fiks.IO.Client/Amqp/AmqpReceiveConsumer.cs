@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using KS.Fiks.IO.Client.Dokumentlager;
 using KS.Fiks.IO.Client.Exceptions;
@@ -12,7 +13,7 @@ using RabbitMQ.Client;
 
 namespace KS.Fiks.IO.Client.Amqp
 {
-    internal class AmqpReceiveConsumer : DefaultBasicConsumer, IAmqpReceiveConsumer
+    internal class AmqpReceiveConsumer : AsyncDefaultBasicConsumer, IAmqpReceiveConsumer
     {
         private const string DokumentlagerHeaderName = "dokumentlager-id";
 
@@ -27,7 +28,7 @@ namespace KS.Fiks.IO.Client.Amqp
         private readonly ISendHandler _sendHandler;
 
         public AmqpReceiveConsumer(
-            IModel model,
+            IChannel model,
             IDokumentlagerHandler dokumentlagerHandler,
             IFileWriter fileWriter,
             IAsicDecrypter decrypter,
@@ -44,16 +45,9 @@ namespace KS.Fiks.IO.Client.Amqp
 
         public event EventHandler<MottattMeldingArgs> Received;
 
-        public override void HandleBasicDeliver(
-            string consumerTag,
-            ulong deliveryTag,
-            bool redelivered,
-            string exchange,
-            string routingKey,
-            IBasicProperties properties,
-            ReadOnlyMemory<byte> body)
+        public override async Task HandleBasicDeliverAsync(string consumerTag, ulong deliveryTag, bool redelivered, string exchange, string routingKey, IReadOnlyBasicProperties properties, ReadOnlyMemory<byte> body, CancellationToken cancellationToken = default)
         {
-            base.HandleBasicDeliver(consumerTag, deliveryTag, redelivered, exchange, routingKey, properties, body);
+            await base.HandleBasicDeliverAsync(consumerTag, deliveryTag, redelivered, exchange, routingKey, properties, body, cancellationToken);
 
             if (Received == null)
             {
@@ -66,7 +60,7 @@ namespace KS.Fiks.IO.Client.Amqp
 
                 Received?.Invoke(
                     this,
-                    new MottattMeldingArgs(receivedMessage, new SvarSender(_sendHandler, receivedMessage, new AmqpAcknowledgeManager(() => Model.BasicAck(deliveryTag, false), () => Model.BasicNack(deliveryTag, false, false), () => Model.BasicNack(deliveryTag, false, true)))));
+                    new MottattMeldingArgs(receivedMessage, new SvarSender(_sendHandler, receivedMessage, new AmqpAcknowledgeManager(() => Channel.BasicAckAsync(deliveryTag, false), () => Channel.BasicNackAsync(deliveryTag, false, false), () => Channel.BasicNackAsync(deliveryTag, false, true)))));
             }
             catch (Exception ex)
             {
@@ -75,12 +69,12 @@ namespace KS.Fiks.IO.Client.Amqp
             }
         }
 
-        private static bool IsDataInDokumentlager(IBasicProperties properties)
+        private static bool IsDataInDokumentlager(IReadOnlyBasicProperties properties)
         {
             return ReceivedMessageParser.GetGuidFromHeader(properties.Headers, DokumentlagerHeaderName) != null;
         }
 
-        private static Guid GetDokumentlagerId(IBasicProperties properties)
+        private static Guid GetDokumentlagerId(IReadOnlyBasicProperties properties)
         {
             try
             {
@@ -93,12 +87,12 @@ namespace KS.Fiks.IO.Client.Amqp
             }
         }
 
-        private static bool HasPayload(IBasicProperties properties, ReadOnlyMemory<byte> body)
+        private static bool HasPayload(IReadOnlyBasicProperties properties, ReadOnlyMemory<byte> body)
         {
             return IsDataInDokumentlager(properties) || body.Length > 0;
         }
 
-        private MottattMelding ParseMessage(IBasicProperties properties, ReadOnlyMemory<byte> body, bool resendt)
+        private MottattMelding ParseMessage(IReadOnlyBasicProperties properties, ReadOnlyMemory<byte> body, bool resendt)
         {
             var metadata = ReceivedMessageParser.Parse(this._accountId, properties, resendt);
             return new MottattMelding(
@@ -109,7 +103,7 @@ namespace KS.Fiks.IO.Client.Amqp
                 _fileWriter);
         }
 
-        private Func<Task<Stream>> GetDataProvider(IBasicProperties properties, byte[] body)
+        private Func<Task<Stream>> GetDataProvider(IReadOnlyBasicProperties properties, byte[] body)
         {
             if (!HasPayload(properties, body))
             {

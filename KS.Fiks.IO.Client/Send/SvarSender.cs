@@ -52,19 +52,19 @@ namespace KS.Fiks.IO.Client.Send
                 .ConfigureAwait(false);
         }
 
-        public void Ack()
+        public async Task Ack()
         {
-            this._amqpAcknowledgeManager.Ack().Invoke();
+            await _amqpAcknowledgeManager.Ack();
         }
 
-        public void Nack()
+        public async Task Nack()
         {
-            this._amqpAcknowledgeManager.Nack().Invoke();
+            await _amqpAcknowledgeManager.Nack();
         }
 
-        public void NackWithRequeue()
+        public async Task NackWithRequeue()
         {
-            this._amqpAcknowledgeManager.NackWithRequeue().Invoke();
+            await _amqpAcknowledgeManager.NackWithRequeue();
         }
 
         private async Task<SendtMelding> Reply(string messageType, IPayload payload, Guid? klientMeldingId)
