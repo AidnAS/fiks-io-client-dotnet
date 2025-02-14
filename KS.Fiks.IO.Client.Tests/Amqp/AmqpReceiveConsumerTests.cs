@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using KS.Fiks.IO.Client.Exceptions;
 using KS.Fiks.IO.Client.FileIO;
@@ -26,7 +27,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void ReceivedHandler()
+        public async Task ReceivedHandler()
         {
             var sut = _fixture.CreateSut();
 
@@ -35,7 +36,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
 
             sut.Received += handler;
 
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 34,
                 false,
@@ -48,7 +49,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void ReceivesExpectedMessageMetadata()
+        public async Task ReceivesExpectedMessageMetadata()
         {
             var expectedMessageMetadata = _fixture.DefaultMetadata;
 
@@ -61,7 +62,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
                 {ReceivedMessageParser.EgendefinertHeaderPrefix + "test", Encoding.UTF8.GetBytes("Test")}
             };
 
-            var propertiesMock = new Mock<IBasicProperties>();
+            var propertiesMock = new Mock<IReadOnlyBasicProperties>();
             propertiesMock.Setup(_ => _.Headers).Returns(headers);
             propertiesMock.Setup(_ => _.Expiration)
                           .Returns(
@@ -81,7 +82,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
 
             sut.Received += handler;
 
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 34,
                 false,
@@ -101,7 +102,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void ReceivesExpectedMessageMetadataWithRedeliveredTrue()
+        public async Task ReceivesExpectedMessageMetadataWithRedeliveredTrue()
         {
             var expectedMessageMetadata = _fixture.DefaultMetadata;
 
@@ -114,7 +115,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
                 {ReceivedMessageParser.EgendefinertHeaderPrefix + "test", Encoding.UTF8.GetBytes("Test")}
             };
 
-            var propertiesMock = new Mock<IBasicProperties>();
+            var propertiesMock = new Mock<IReadOnlyBasicProperties>();
             propertiesMock.Setup(_ => _.Headers).Returns(headers);
             propertiesMock.Setup(_ => _.Expiration)
                           .Returns(
@@ -134,7 +135,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
 
             sut.Received += handler;
 
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 34,
                 true,
@@ -154,7 +155,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void ThrowsParseExceptionIfMessageIdIsNotValidGuid()
+        public async Task ThrowsParseExceptionIfMessageIdIsNotValidGuid()
         {
             var expectedMessageMetadata = _fixture.DefaultMetadata;
 
@@ -166,7 +167,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
                 {"svar-til", Encoding.UTF8.GetBytes(expectedMessageMetadata.SvarPaMelding.ToString()) }
             };
 
-            var propertiesMock = new Mock<IBasicProperties>();
+            var propertiesMock = new Mock<IReadOnlyBasicProperties>();
             propertiesMock.Setup(_ => _.Headers).Returns(headers);
             propertiesMock.Setup(_ => _.Expiration)
                           .Returns(
@@ -176,9 +177,9 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
             var handler = new EventHandler<MottattMeldingArgs>((a, messageArgs) => { });
 
             sut.Received += handler;
-            Assert.Throws<FiksIOParseException>(() =>
+            await Assert.ThrowsAsync<FiksIOParseException>(async () =>
             {
-                sut.HandleBasicDeliver(
+                await sut.HandleBasicDeliverAsync(
                     "tag",
                     34,
                     false,
@@ -190,7 +191,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void ThrowsMissingHeaderExceptionExceptionIfHeaderIsNull()
+        public async Task ThrowsMissingHeaderExceptionExceptionIfHeaderIsNull()
         {
             var expectedMessageMetadata = _fixture.DefaultMetadata;
 
@@ -204,9 +205,9 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
             var handler = new EventHandler<MottattMeldingArgs>((a, messageArgs) => { });
 
             sut.Received += handler;
-            Assert.Throws<FiksIOMissingHeaderException>(() =>
+            await Assert.ThrowsAsync<FiksIOMissingHeaderException>(async () =>
             {
-                sut.HandleBasicDeliver(
+                await sut.HandleBasicDeliverAsync(
                     "tag",
                     34,
                     false,
@@ -218,7 +219,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void ThrowsMissingHeaderExceptionExceptionIfMessageIdIsMissing()
+        public async Task ThrowsMissingHeaderExceptionExceptionIfMessageIdIsMissing()
         {
             var expectedMessageMetadata = _fixture.DefaultMetadata;
 
@@ -239,9 +240,9 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
             var handler = new EventHandler<MottattMeldingArgs>((a, messageArgs) => { });
 
             sut.Received += handler;
-            Assert.Throws<FiksIOMissingHeaderException>(() =>
+            await Assert.ThrowsAsync<FiksIOMissingHeaderException>(async () =>
             {
-                sut.HandleBasicDeliver(
+                await sut.HandleBasicDeliverAsync(
                     "tag",
                     34,
                     false,
@@ -253,7 +254,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void FileWriterWriteIsCalledWhenWriteEncryptedZip()
+        public async Task FileWriterWriteIsCalledWhenWriteEncryptedZip()
         {
             var sut = _fixture.CreateSut();
 
@@ -267,7 +268,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
 
             sut.Received += handler;
 
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 34,
                 false,
@@ -280,7 +281,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void DokumentlagerHandlerIsUsedWhenHeaderIsSet()
+        public async Task DokumentlagerHandlerIsUsedWhenHeaderIsSet()
         {
             var sut = _fixture.WithDokumentlagerHeader().CreateSut();
 
@@ -291,7 +292,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
 
             sut.Received += handler;
 
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 34,
                 false,
@@ -304,7 +305,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void DokumentlagerHandlerIsNotUsedWhenHeaderIsNotSet()
+        public async Task DokumentlagerHandlerIsNotUsedWhenHeaderIsNotSet()
         {
             var sut = _fixture.WithoutDokumentlagerHeader().CreateSut();
 
@@ -316,8 +317,8 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
             });
 
             sut.Received += handler;
-
-            sut.HandleBasicDeliver(
+            
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 34,
                 false,
@@ -344,7 +345,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
 
             sut.Received += handler;
 
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 34,
                 false,
@@ -375,7 +376,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
 
             sut.Received += handler;
 
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 34,
                 false,
@@ -393,7 +394,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void PayloadDecrypterAndFileWriterIsCalledWhenWriteDecryptedFile()
+        public async Task PayloadDecrypterAndFileWriterIsCalledWhenWriteDecryptedFile()
         {
             var sut = _fixture.CreateSut();
 
@@ -407,7 +408,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
 
             sut.Received += handler;
 
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 34,
                 false,
@@ -420,7 +421,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void BasicAckIsCalledFromReplySender()
+        public async Task BasicAckIsCalledFromReplySender()
         {
             var sut = _fixture.CreateSut();
             var data = new[] {default(byte), byte.MaxValue};
@@ -429,7 +430,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
             var deliveryTag = (ulong)3423423;
 
             sut.Received += handler;
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 deliveryTag,
                 false,
@@ -438,16 +439,16 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
                 _fixture.DefaultProperties,
                 data);
 
-            _fixture.ModelMock.Verify(_ => _.BasicAck(deliveryTag, false));
+            _fixture.ModelMock.Verify(_ => _.BasicAckAsync(deliveryTag, false, CancellationToken.None));
         }
 
         [Fact]
-        public void BasicAckIsNotCalledWithDeliveryTagIfReceiverIsNotSet()
+        public async Task BasicAckIsNotCalledWithDeliveryTagIfReceiverIsNotSet()
         {
             var sut = _fixture.CreateSut();
             var data = new[] {default(byte), byte.MaxValue};
 
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 34,
                 false,
@@ -456,11 +457,11 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
                 _fixture.DefaultProperties,
                 data);
 
-            _fixture.ModelMock.Verify(_ => _.BasicAck(It.IsAny<ulong>(), false), Times.Never);
+            _fixture.ModelMock.Verify(_ => _.BasicAckAsync(It.IsAny<ulong>(), false, CancellationToken.None), Times.Never);
         }
 
         [Fact]
-        public void ThrowsExceptionWhenGettingEncryptedStreamWithNoData()
+        public async Task ThrowsExceptionWhenGettingEncryptedStreamWithNoData()
         {
             var sut = _fixture.CreateSut();
             var data = Array.Empty<byte>();
@@ -480,7 +481,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
             var deliveryTag = (ulong) 3423423;
 
             sut.Received += handler;
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 deliveryTag,
                 false,
@@ -493,7 +494,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void ThrowsExceptionWhenGettingDecryptedStreamWithNoData()
+        public async Task ThrowsExceptionWhenGettingDecryptedStreamWithNoData()
         {
             var sut = _fixture.CreateSut();
             var data = Array.Empty<byte>();
@@ -513,7 +514,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
             var deliveryTag = (ulong) 3423423;
 
             sut.Received += handler;
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 deliveryTag,
                 false,
@@ -526,7 +527,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void ThrowsExceptionWhenWritingDecryptedStreamWithNoData()
+        public async Task ThrowsExceptionWhenWritingDecryptedStreamWithNoData()
         {
             var sut = _fixture.CreateSut();
             var data = Array.Empty<byte>();
@@ -546,7 +547,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
             var deliveryTag = (ulong) 3423423;
 
             sut.Received += handler;
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 deliveryTag,
                 false,
@@ -559,7 +560,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void ThrowsExceptionWhenWritingEnryptedStreamWithNoData()
+        public async Task ThrowsExceptionWhenWritingEnryptedStreamWithNoData()
         {
             var sut = _fixture.CreateSut();
             var data = Array.Empty<byte>();
@@ -579,7 +580,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
             var deliveryTag = (ulong) 3423423;
 
             sut.Received += handler;
-            sut.HandleBasicDeliver(
+            await sut.HandleBasicDeliverAsync(
                 "tag",
                 deliveryTag,
                 false,

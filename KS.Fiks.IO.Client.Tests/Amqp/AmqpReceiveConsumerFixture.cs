@@ -18,13 +18,13 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
     {
         private const string DokumentlagerHeaderName = "dokumentlager-id";
 
-        private Mock<IBasicProperties> _defaultProperties;
+        private Mock<IReadOnlyBasicProperties> _defaultProperties;
 
         private bool _shouldUseDokumentlager = false;
 
         public AmqpReceiveConsumerFixture()
         {
-            ModelMock = new Mock<IModel>();
+            ModelMock = new Mock<IChannel>();
             DokumentlagerHandler = new Mock<IDokumentlagerHandler>();
             FileWriterMock = new Mock<IFileWriter>();
             AsicDecrypterMock = new Mock<IAsicDecrypter>();
@@ -41,11 +41,11 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
 
         public Stream DokumentlagerOutStream => new MemoryStream();
 
-        public Mock<IModel> ModelMock { get; }
+        public Mock<IChannel> ModelMock { get; }
 
         public MottattMeldingMetadata DefaultMetadata { get; }
 
-        public IBasicProperties DefaultProperties => _defaultProperties.Object;
+        public IReadOnlyBasicProperties DefaultProperties => _defaultProperties.Object;
 
         public AmqpReceiveConsumerFixture WithDokumentlagerHeader()
         {
@@ -82,8 +82,8 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
 
         private void SetProperties()
         {
-            _defaultProperties = new Mock<IBasicProperties>();
-            var headers = new Dictionary<string, object>
+            _defaultProperties = new Mock<IReadOnlyBasicProperties>();
+            var headers = new Dictionary<string, object?>
             {
                 {"avsender-id", Encoding.UTF8.GetBytes(Guid.NewGuid().ToString()) },
                 {"melding-id", Encoding.UTF8.GetBytes(Guid.NewGuid().ToString()) },

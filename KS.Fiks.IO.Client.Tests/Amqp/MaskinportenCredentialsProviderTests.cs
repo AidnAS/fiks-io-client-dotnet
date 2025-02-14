@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Xunit;
 
 namespace KS.Fiks.IO.Client.Tests.Amqp
@@ -12,12 +13,12 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         }
 
         [Fact]
-        public void PasswordIsSetToIntegrationPasswordAndMaskinportenToken()
+        public async Task PasswordIsSetToIntegrationPasswordAndMaskinportenToken()
         {
             var password = "myIntegrationPassword";
             var token = "maskinportenExpectedToken";
             var sut = _fixture.WithMaskinportenToken(token).WithIntegrationPassword(password).CreateSut();
-            Assert.Equal($"{password} {token}", sut.Password);
+            Assert.Equal($"{password} {token}", (await sut.GetCredentialsAsync()).Password);
         }
     }
 }

@@ -63,7 +63,7 @@ namespace KS.Fiks.IO.Client.Tests.Send
         internal SvarSender CreateSut()
         {
             SetupMocks();
-            return new SvarSender(SendHandlerMock.Object, _mottattMelding, new AmqpAcknowledgeManager(_ack, _nack, _nackWithRequeue));
+            return new SvarSender(SendHandlerMock.Object, _mottattMelding, new AmqpAcknowledgeManager(async () => _ack(), async () => _nack(), async () => _nackWithRequeue()));
         }
 
         private void SetupMocks()

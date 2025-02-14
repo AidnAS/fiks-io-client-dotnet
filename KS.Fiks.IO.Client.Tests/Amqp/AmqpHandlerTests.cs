@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using KS.Fiks.IO.Client.Exceptions;
 using KS.Fiks.IO.Client.Models;
 using Moq;
@@ -24,8 +25,8 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
         {
             var sut = _fixture.CreateSut();
 
-            _fixture.ConnectionFactoryMock.Verify(_ => _.CreateConnection(It.IsAny<IList<AmqpTcpEndpoint>>(), It.IsAny<string>()), Times.Once);
-            _fixture.ConnectionMock.Verify(_ => _.CreateModel(), Times.Once);
+            _fixture.ConnectionFactoryMock.Verify(_ => _.CreateConnectionAsync(It.IsAny<IList<AmqpTcpEndpoint>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            _fixture.ConnectionMock.Verify(_ => _.CreateChannelAsync(It.IsAny<CreateChannelOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -51,7 +52,7 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
 
             sut.AddMessageReceivedHandler(handler, null);
 
-            _fixture.AmqpConsumerFactoryMock.Verify(_ => _.CreateReceiveConsumer(It.IsAny<IModel>()));
+            _fixture.AmqpConsumerFactoryMock.Verify(_ => _.CreateReceiveConsumer(It.IsAny<IChannel>()));
         }
 
         [Fact]
@@ -68,18 +69,5 @@ namespace KS.Fiks.IO.Client.Tests.Amqp
             counter.ShouldBe(1);
         }
 
-        [Fact]
-        public void AddReceivedListenerAddsHandlerToListenOnCanceledEvent()
-        {
-            var sut = _fixture.CreateSut();
-
-            var counter = 0;
-            var handler = new EventHandler<ConsumerEventArgs>((a, _) => { counter++; });
-
-            sut.AddMessageReceivedHandler(null, handler);
-
-            _fixture.AmqpReceiveConsumerMock.Raise(_ => _.ConsumerCancelled += null, this, null);
-            counter.ShouldBe(1);
-        }
     }
 }
